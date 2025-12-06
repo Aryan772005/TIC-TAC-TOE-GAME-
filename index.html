@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic-Tac-Toe Arena - LED RGB Glow</title>
+    <style>
+        /* BASE & THEME */
+        :root {
+            --color-bg-dark: #121212;
+            --color-bg-card: #1e1e1e;
+            --color-primary: #8e2de2; /* Purple */
+            --color-secondary: #4a00e0; /* Darker Purple */
+            --color-x: #ff6b6b; /* Reddish X */
+            --color-o: #4ecdc4; /* Cyan O */
+            --color-text: #e0e0e0;
+            --cell-size: 100px;
+        }
+
+        /* --- RGB LED EFFECT KEYFRAMES --- */
+        @keyframes rgb-glow {
+            0% { box-shadow: 0 0 25px rgba(255, 0, 0, 0.8), 0 0 10px rgba(255, 0, 0, 0.4); } /* Red */
+            25% { box-shadow: 0 0 25px rgba(0, 255, 255, 0.8), 0 0 10px rgba(0, 255, 255, 0.4); } /* Cyan */
+            50% { box-shadow: 0 0 25px rgba(0, 0, 255, 0.8), 0 0 10px rgba(0, 0, 255, 0.4); } /* Blue */
+            75% { box-shadow: 0 0 25px rgba(255, 0, 255, 0.8), 0 0 10px rgba(255, 0, 255, 0.4); } /* Magenta */
+            100% { box-shadow: 0 0 25px rgba(255, 0, 0, 0.8), 0 0 10px rgba(255, 0, 0, 0.4); } /* Red */
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--color-bg-dark), #0a0a0a);
+            color: var(--color-text);
+            margin: 0;
+            overflow-y: auto;
+            padding-bottom: 50px;
+        }
+
+        /* CONTAINER & HEADER */
+        #app {
+            background: var(--color-bg-card);
+            padding: 40px;
+            margin-top: 50px;
+            border-radius: 20px;
+            /* APPLIED RGB GLOW EFFECT HERE */
+            animation: rgb-glow 6s linear infinite alternate;
+            text-align: center;
+            width: 90%;
+            max-width: 600px;
+            transition: all 0.3s ease-in-out;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 5px; /* Reduced margin to fit name above */
+            background: -webkit-linear-gradient(45deg, var(--color-primary), var(--color-o));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 800;
+        }
+        
+        /* STYLING FOR THE NAME */
+        #creator-name {
+            font-size: 1.1em;
+            color: #ccc;
+            margin-bottom: 25px;
+            font-weight: 300;
+            letter-spacing: 1px;
+            text-shadow: 0 0 5px rgba(142, 45, 226, 0.5);
+        }
+
+        /* BUTTONS & SELECTION */
+        button {
+            background: linear-gradient(45deg, var(--color-primary), var(--color-secondary));
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            margin: 8px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1.05em;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            transition: all 0.2s ease;
+        }
+
+        button:hover {
+            opacity: 0.9;
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 6px 20px rgba(142, 45, 226, 0.6);
+        }
+
+        #difficulty-selection h2 {
+            color: var(--color-o);
+            margin-bottom: 15px;
+        }
+
+        /* STATUS DISPLAY */
+        #status {
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            min-height: 1.8em;
+            color: var(--color-text);
+            font-weight: 500;
+            text-shadow: 0 0 10px rgba(var(--color-primary), 0.5);
+        }
+
+        /* GAME BOARD */
+        .tic-tac-toe-board {
+            display: grid;
+            grid-template-columns: repeat(3, var(--cell-size));
+            grid-template-rows: repeat(3, var(--cell-size));
+            width: calc(var(--cell-size) * 3);
+            height: calc(var(--cell-size) * 3);
+            margin: 30px auto;
+            border-radius: 15px;
+            overflow: hidden;
+            background: rgba(0, 0, 0, 0.3);
+            border: 2px solid var(--color-primary);
+            /* APPLIED RGB GLOW EFFECT HERE */
+            animation: rgb-glow 6s linear infinite reverse;
+        }
+
+        .cell {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 4.5em;
+            font-weight: 900;
+            border: 2px solid #333;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s, box-shadow 0.2s;
+            position: relative;
+        }
+        
+        @keyframes placeMark {
+            0% { transform: scale(0.5); opacity: 0; }
+            80% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(1); }
+        }
+
+        .occupied > span {
+            animation: placeMark 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        /* COLORS */
+        .x-color { color: var(--color-x); text-shadow: 0 0 10px var(--color-x); }
+        .o-color { color: var(--color-o); text-shadow: 0 0 10px var(--color-o); }
+        
+        /* Grid cleanup */
+        .cell:nth-child(3n) { border-right: none; }
+        .cell:nth-child(n+7) { border-bottom: none; }
+        .cell:nth-child(1), .cell:nth-child(4), .cell:nth-child(7) { border-left: none; }
+        .cell:nth-child(1), .cell:nth-child(2), .cell:nth-child(3) { border-top: none; }
+
+        /* LEADERBOARD & STATS */
+        #leaderboard {
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(46, 46, 46, 0.5);
+            border-radius: 15px;
+            border: 1px solid #333;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+
+        #leaderboard h2 {
+            color: var(--color-primary);
+            margin-bottom: 15px;
+        }
+        
+        /* FOOTER */
+        .footer {
+            margin-top: 40px;
+            padding: 10px;
+            color: #555;
+            font-size: 0.9em;
+            text-align: center;
+            width: 100%;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <h1>❌ Tic-Tac-Toe Arena ⭕</h1>
+        <h2 id="creator-name">By Aryan Singh Tariani</h2>
+        
+        <div id="mode-selection">
+            <button id="ai-btn">Start Game (Play Against AI)</button>
+        </div>
+
+        <div id="difficulty-selection" class="hidden">
+            <h2>Select AI Difficulty (You are X)</h2>
+            <button data-difficulty="easy">Easy (Random)</button>
+            <button data-difficulty="hard">Hard (Minimax)</button>
+        </div>
+
+        <div id="game-container" class="hidden">
+            <div id="status"></div>
+            <div id="board" class="tic-tac-toe-board">
+                </div>
+            <button id="reset-btn">New Game / Change Mode</button>
+        </div>
+
+        <div id="leaderboard">
+            <h2>🏆 Local Leaderboard (AI Stats)</h2>
+            <ul id="leaderboard-list">
+                <li>Player Wins (X): <span id="player-wins">0</span></li>
+                <li>AI Wins (O): <span id="ai-wins">0</span></li>
+                <li>Draws: <span id="draws">0</span></li>
+            </ul>
+        </div>
+    </div>
+    
+    <footer class="footer">
+        © 2025 Aryan Singh Tariani. All rights reserved.
+    </footer>
+
+    <script>
+        /* JavaScript Logic (Unchanged) */
+        const WINNING_COMBOS = [
+            [0, 1, 2], [3, 4, 5], [6, 7, 8],
+            [0, 3, 6], [1, 4, 7], [2, 5, 8],
+            [0, 4, 8], [2, 4, 6]
+        ];
+
+        let board = Array(9).fill(null);
+        let currentPlayer = 'X';
+        let gameActive = false;
+        let AIDifficulty = 'easy';
+        let scores = JSON.parse(localStorage.getItem('tictactoeScores')) || { 'X': 0, 'O': 0, 'draw': 0 };
+
+        const boardElement = document.getElementById('board');
+        const statusElement = document.getElementById('status');
+        const gameContainer = document.getElementById('game-container');
+        const modeSelection = document.getElementById('mode-selection');
+        const difficultySelection = document.getElementById('difficulty-selection');
+        const resetBtn = document.getElementById('reset-btn');
+        const playerWinsElement = document.getElementById('player-wins');
+        const aiWinsElement = document.getElementById('ai-wins');
+        const drawsElement = document.getElementById('draws');
+
+        // --- Core Game Functions ---
+
+        function checkWinner(currentBoard) {
+            for (const combo of WINNING_COMBOS) {
+                const [a, b, c] = combo;
+                if (currentBoard[a] && currentBoard[a] === currentBoard[b] && currentBoard[a] === currentBoard[c]) {
+                    if (gameActive) highlightWinningCells(combo); 
+                    return currentBoard[a];
+                }
+            }
+            if (currentBoard.every(cell => cell !== null)) {
+                return 'Draw';
+            }
+            return null;
+        }
+
+        function highlightWinningCells(combo) {
+             const cells = boardElement.children;
+             combo.forEach(index => {
+                 cells[index].style.backgroundColor = 'rgba(255, 255, 255, 0.15)';
+                 cells[index].style.boxShadow = `0 0 15px ${board[index] === 'X' ? 'var(--color-x)' : 'var(--color-o)'}`;
+             });
+        }
+
+
+        function handleResult(winner) {
+            gameActive = false;
+            if (winner === 'Draw') {
+                statusElement.textContent = "It's a Draw! 🤝";
+                scores.draw++;
+            } else {
+                statusElement.textContent = `Player ${winner} Wins! 🎉`;
+                scores[winner === 'X' ? 'X' : 'O']++;
+            }
+            localStorage.setItem('tictactoeScores', JSON.stringify(scores));
+            updateLeaderboard();
+        }
+
+        function updateLeaderboard() {
+            playerWinsElement.textContent = scores['X'];
+            aiWinsElement.textContent = scores['O'];
+            drawsElement.textContent = scores.draw;
+        }
+
+        function handleCellClick(index) {
+            if (!gameActive || board[index]) return;
+
+            board[index] = currentPlayer;
+            renderBoard();
+
+            const winner = checkWinner(board);
+            if (winner) {
+                handleResult(winner);
+                return;
+            }
+
+            currentPlayer = (currentPlayer === 'X') ? 'O' : 'X';
+            statusElement.textContent = `Current Turn: ${currentPlayer === 'X' ? 'Player (X)' : 'AI (O)'}`;
+
+            if (currentPlayer === 'O') {
+                statusElement.textContent = "AI is thinking...";
+                setTimeout(makeAIMove, 700);
+            }
+        }
+
+        function createBoard() {
+            boardElement.innerHTML = '';
+            for (let i = 0; i < 9; i++) {
+                const cell = document.createElement('div');
+                cell.classList.add('cell');
+                cell.dataset.index = i;
+                cell.addEventListener('click', () => handleCellClick(i));
+                boardElement.appendChild(cell);
+            }
+        }
+
+        function renderBoard() {
+            const cells = boardElement.children;
+            board.forEach((value, index) => {
+                const cell = cells[index];
+                if (cell.textContent !== value && value !== null) {
+                    cell.innerHTML = `<span>${value}</span>`; 
+                    cell.classList.add('occupied', value === 'X' ? 'x-color' : 'o-color');
+                } else if (value === null) {
+                    cell.innerHTML = '';
+                    cell.classList.remove('x-color', 'o-color', 'occupied');
+                    cell.style.backgroundColor = '';
+                    cell.style.boxShadow = '';
+                }
+            });
+        }
+
+        function startGame(difficulty = 'easy') {
+            AIDifficulty = difficulty;
+            board.fill(null);
+            currentPlayer = 'X';
+            gameActive = true;
+            
+            modeSelection.classList.add('hidden');
+            difficultySelection.classList.add('hidden');
+            gameContainer.classList.remove('hidden');
+            
+            renderBoard();
+            statusElement.textContent = `Current Turn: Player (X)`;
+        }
+
+        // --- AI Logic Functions (Minimax for Hard Mode) ---
+
+        function makeEasyMove() {
+            const availableMoves = board.map((val, idx) => val === null ? idx : null).filter(val => val !== null);
+            if (availableMoves.length > 0) {
+                const randomIndex = Math.floor(Math.random() * availableMoves.length);
+                return availableMoves[randomIndex];
+            }
+            return null;
+        }
+        
+        function minimax(currentBoard, depth, isMaximizing) {
+            const result = checkWinner(currentBoard);
+            
+            if (result === 'X') return -10 + depth; 
+            if (result === 'O') return 10 - depth;  
+            if (result === 'Draw') return 0;
+            
+            const availableMoves = currentBoard.map((val, idx) => val === null ? idx : null).filter(val => val !== null);
+
+            if (isMaximizing) { 
+                let bestScore = -Infinity;
+                for (const index of availableMoves) {
+                    currentBoard[index] = 'O';
+                    let score = minimax(currentBoard, depth + 1, false);
+                    currentBoard[index] = null;
+                    bestScore = Math.max(bestScore, score);
+                }
+                return bestScore;
+            } else { 
+                let bestScore = Infinity;
+                for (const index of availableMoves) {
+                    currentBoard[index] = 'X';
+                    let score = minimax(currentBoard, depth + 1, true);
+                    currentBoard[index] = null;
+                    bestScore = Math.min(bestScore, score);
+                }
+                return bestScore;
+            }
+        }
+
+        function makeHardMove() {
+            let bestScore = -Infinity;
+            let move = null;
+            const availableMoves = board.map((val, idx) => val === null ? idx : null).filter(val => val !== null);
+
+            for (const index of availableMoves) {
+                board[index] = 'O';
+                let score = minimax(board, 0, false);
+                board[index] = null;
+
+                if (score > bestScore) {
+                    bestScore = score;
+                    move = index;
+                }
+            }
+            return move;
+        }
+
+        function makeAIMove() {
+            let moveIndex;
+            if (AIDifficulty === 'easy') {
+                moveIndex = makeEasyMove();
+            } else {
+                moveIndex = makeHardMove();
+            }
+
+            if (moveIndex !== null) {
+                handleCellClick(moveIndex);
+            }
+        }
+
+        // --- Event Listeners and Initialization ---
+
+        document.getElementById('ai-btn').addEventListener('click', () => {
+            modeSelection.classList.add('hidden');
+            difficultySelection.classList.remove('hidden');
+        });
+
+        document.querySelectorAll('#difficulty-selection button').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const difficulty = e.target.dataset.difficulty;
+                startGame(difficulty);
+            });
+        });
+
+        resetBtn.addEventListener('click', () => {
+            if (gameActive) {
+                startGame(AIDifficulty);
+            } else {
+                gameContainer.classList.add('hidden');
+                difficultySelection.classList.add('hidden');
+                modeSelection.classList.remove('hidden');
+            }
+        });
+
+        // Initialize on load
+        createBoard();
+        updateLeaderboard();
+    </script>
+</body>
+</html>
